@@ -40,7 +40,8 @@
       "attrs": {
         "managed": true,
         "headless": true,
-        "persistent_profile": false
+        "persistent_profile": true,
+        "interactive_viewer": true
       }
     }
   ],
