@@ -1,0 +1,42 @@
+{
+  "platform": "linux",
+  "description": "Linux endpoint using the existing framework WebSocket protocol.",
+  "provides_capabilities": [
+    {
+      "name": "cap:linux.system",
+      "variant": "linux"
+    },
+    {
+      "name": "cap:linux.files",
+      "variant": "linux"
+    },
+    {
+      "name": "cap:linux.terminal",
+      "variant": "linux"
+    },
+    {
+      "name": "cap:linux.download",
+      "variant": "linux"
+    },
+    {
+      "name": "cap:system.workload",
+      "variant": "compute",
+      "attrs": {
+        "durable_receipts": true,
+        "max_seconds": 3600,
+        "vfs_routes": [
+          "direct",
+          "proxy",
+          "proxy_stream"
+        ],
+        "stream_max_bytes": 16777216,
+        "capacity_probe": true,
+        "progress": true
+      }
+    }
+  ],
+  "pip": {
+    "websockets": "Framework reverse WebSocket channel",
+    "aiohttp": "Private streaming download HTTP service"
+  }
+}

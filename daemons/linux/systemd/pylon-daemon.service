@@ -1,0 +1,14 @@
+[Unit]
+Description=Pylon endpoint daemon (separate installation)
+After=network-online.target
+
+[Service]
+WorkingDirectory=%h/pylon-server-daemon
+EnvironmentFile=%h/.config/pylon-server/daemon.env
+ExecStart=%h/pylon-server-daemon/.venv/bin/python %h/pylon-server-daemon/daemons/linux/agent.py
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target

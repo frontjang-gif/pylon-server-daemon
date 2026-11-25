@@ -1,0 +1,207 @@
+{
+  "endpoint": "win-local",
+  "platform": "windows",
+  "description": "Windows endpoint capability agent. Provides environment-bound capabilities that only exist on this desktop machine. win32com/pywin32 lives ONLY in this daemon.",
+  "provides_capabilities": [
+    {
+      "name": "cap:com.outlook.calendar",
+      "variant": null,
+      "attrs": {
+        "readonly": true
+      }
+    },
+    {
+      "name": "cap:com.outlook.mail",
+      "variant": null,
+      "attrs": {}
+    },
+    {
+      "name": "cap:com.office.export",
+      "variant": null,
+      "attrs": {
+        "windows": true
+      }
+    },
+    {
+      "name": "cap:com.onenote",
+      "variant": null,
+      "attrs": {
+        "readonly": true
+      }
+    },
+    {
+      "name": "cap:system.cdp",
+      "variant": "sso",
+      "attrs": {
+        "sso": true
+      }
+    },
+    {
+      "name": "cap:remote.cdp",
+      "variant": "ssh",
+      "attrs": {
+        "remote": true
+      }
+    },
+    {
+      "name": "cap:system.acp",
+      "variant": null,
+      "attrs": {}
+    },
+    {
+      "name": "cap:system.secrets.dpapi",
+      "variant": null,
+      "attrs": {
+        "user_bound": true
+      }
+    },
+    {
+      "name": "cap:system.browser.token",
+      "variant": "sso",
+      "attrs": {
+        "sso": true
+      }
+    },
+    {
+      "name": "cap:system.browser.cookie",
+      "variant": "sso",
+      "attrs": {
+        "sso": true
+      }
+    },
+    {
+      "name": "cap:system.browser.fetch",
+      "variant": "sso",
+      "attrs": {
+        "sso": true,
+        "headed": true
+      }
+    },
+    {
+      "name": "cap:system.terminal",
+      "variant": null,
+      "attrs": {
+        "desktop": true
+      }
+    },
+    {
+      "name": "cap:desktop.tray",
+      "variant": null,
+      "attrs": {
+        "desktop": true
+      }
+    },
+    {
+      "name": "cap:desktop.wakeup",
+      "variant": null,
+      "attrs": {
+        "desktop": true,
+        "windows": true
+      }
+    },
+    {
+      "name": "cap:desktop.autostart",
+      "variant": null,
+      "attrs": {
+        "desktop": true,
+        "windows": true
+      }
+    },
+    {
+      "name": "cap:desktop.clipboard",
+      "variant": null,
+      "attrs": {
+        "desktop": true,
+        "windows": true
+      }
+    },
+    {
+      "name": "cap:desktop.filewatch",
+      "variant": null,
+      "attrs": {
+        "desktop": true,
+        "windows": true
+      }
+    },
+    {
+      "name": "cap:desktop.input",
+      "variant": null,
+      "attrs": {
+        "desktop": true,
+        "windows": true
+      }
+    },
+    {
+      "name": "cap:desktop.proc",
+      "variant": null,
+      "attrs": {
+        "desktop": true,
+        "windows": true
+      }
+    },
+    {
+      "name": "cap:desktop.onedrive",
+      "variant": null,
+      "attrs": {
+        "desktop": true,
+        "windows": true
+      }
+    },
+    {
+      "name": "cap:desktop.diskmon",
+      "variant": null,
+      "attrs": {
+        "desktop": true,
+        "windows": true
+      }
+    },
+    {
+      "name": "cap:integrations.teams",
+      "variant": "sso",
+      "attrs": {
+        "sso": true
+      }
+    },
+    {
+      "name": "cap:media.transcode",
+      "variant": "ffmpeg",
+      "attrs": {
+        "formats": [
+          "webm",
+          "mp4"
+        ]
+      }
+    },
+    {
+      "name": "cap:system.workload",
+      "variant": "compute",
+      "attrs": {
+        "durable_receipts": true,
+        "max_seconds": 3600,
+        "vfs_routes": [
+          "direct",
+          "proxy",
+          "proxy_stream"
+        ],
+        "stream_max_bytes": 16777216,
+        "capacity_probe": true,
+        "progress": true
+      }
+    }
+  ],
+  "pip": {
+    "pystray": "cap:desktop.tray \u2014 system-tray icon + menu + balloon notifications",
+    "Pillow": "cap:desktop.tray (icon rendering) + cap:system.browser.* image handling + cap:desktop.clipboard image capture",
+    "windows-toasts": "cap:desktop.tray \u2014 clickable Windows toast with buttons (Open / Copy code) for actionable notifications; falls back to the pystray balloon if absent",
+    "pywin32": "COM caps (cap:com.outlook.*) + cap:system.secrets.dpapi (crypt32)",
+    "websocket-client": "cap:system.cdp / browser.* \u2014 CDP WebSocket client",
+    "requests": "cap:system.browser.fetch / downloader http \u2014 HTTP client",
+    "pywinpty": "cap:system.terminal \u2014 interactive ConPTY shell sessions (one-shot `run` works without it)",
+    "imageio-ffmpeg": "cap:media.transcode (fixed-format map animation exports)"
+  },
+  "_pip_note": "Declared pip dependencies the daemon's capabilities need on this endpoint. The agent checks these at startup and warns on any missing one (a cap whose deps are absent degrades to a clear 'unavailable', never a crash). Install with: py -3 -m pip install <names>. NOTE: the notification flyout pane uses stdlib tkinter (not pywebview) because WebView2 does not initialize on all hosts.",
+  "_roadmap_capabilities": [
+    "cap:desktop.notify"
+  ],
+  "_roadmap_note": "Roadmap only (NOT advertised): these have no handler module yet. provides_capabilities MUST match the caps/ modules the daemon registers \u2014 agent.py validates this at startup and warns on drift."
+}

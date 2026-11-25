@@ -1,0 +1,5 @@
+mcp==2.3.0
+uvicorn>=0.31,<1
+yt-dlp[default]
+websocket-client>=1.8,<2
+playwright>=1.50,<2
