@@ -43,8 +43,9 @@ def registration(endpoint, providers):
         if scope != 'shared':
             meta['reserved'] = True
     return {'type': 'register', 'endpoint': endpoint, 'platform': 'linux',
-            'capabilities': [{'name': name, 'variant': 'linux', 'attrs': {'linux': True}}
-                             for name in providers] + [{'name': 'cap:_daemon', 'attrs': {'introspection': True}}],
+            'capabilities': [{'name': name, 'variant': getattr(module, 'VARIANT', 'linux'),
+                              'attrs': {'linux': True, **getattr(module, 'ATTRS', {})}}
+                             for name, module in providers.items()] + [{'name': 'cap:_daemon', 'attrs': {'introspection': True}}],
             'meta': meta}
 
 
