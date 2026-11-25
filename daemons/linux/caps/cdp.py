@@ -310,6 +310,24 @@ def viewer_input(args,ctx):
         else:raise ValueError('Unsupported viewer input')
         return {'ok':True,'applied':True}
 
+def viewer_recipe(args,ctx):
+    """Trusted server supplies a fixed recipe, never a UI-provided expression.
+    Session ownership and the same tab are checked before evaluation.
+    Only whitelisted status/field names cross the viewer boundary.
+    """
+    expr=args.get('expr')
+    if args.get('confirm') is not True or not isinstance(expr,str) or not 1<=len(expr)<=65536:
+        return _error('Recipe confirmation required')
+    with _LOCK:
+        t=_viewer(args,ctx)
+        r=_command(t,'Runtime.evaluate',{'expression':expr,'returnByValue':True,'awaitPromise':True,'timeout':10000})
+        v=r.get('result',{}).get('value')
+        states={'sign_in_required','outside_setup','open_create_form','review_required','existing_values','select_web_type','form_ready','prepared'}
+        if 'exceptionDetails' in r or not isinstance(v,dict) or v.get('state') not in states:
+            return _error('Setup page not recognized')
+        fields=v.get('fields',[])
+        return {'ok':True,'state':v['state'],'fields':[f for f in fields if isinstance(f,str) and f in ('name','redirect_uri','web_type')] if isinstance(fields,list) else []}
+
 def viewer_stop(args,ctx):
     with _LOCK:
         _viewer(args,ctx)
@@ -323,6 +341,6 @@ def _guard(fn):
         except Exception:return _error('Linux Chromium unavailable or browser operation failed')
     return run
 
-METHODS={k:_guard(v) for k,v in {'status':status,'tabs':tabs,'navigate':navigate,'eval':evaluate,'close':close,'stop':stop,'viewer_open':viewer_open,'viewer_shot':viewer_shot,'viewer_input':viewer_input,'viewer_stop':viewer_stop}.items()}
+METHODS={k:_guard(v) for k,v in {'status':status,'tabs':tabs,'navigate':navigate,'eval':evaluate,'close':close,'stop':stop,'viewer_open':viewer_open,'viewer_shot':viewer_shot,'viewer_input':viewer_input,'viewer_stop':viewer_stop,'viewer_recipe':viewer_recipe}.items()}
 # Start only the inexpensive idle monitor, not Chromium, on daemon import.
 _timer=threading.Timer(30,_reap);_timer.daemon=True;_timer.start()

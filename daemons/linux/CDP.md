@@ -43,8 +43,16 @@ required; deploy-token-only requests do not authorize the viewer.
 
 The initial viewer is hosted HTTPS only (trusted origin in Google Auth's
 host-local configuration). It is separate from the fixed public-field OAuth
-recipe. The current Google Auth setup recipe does not yet attach to a named
+recipe. The legacy Google Auth setup recipe does not attach to a named
 profile or the viewer's tab. Actual Google sign-in, MFA and consent remain
 user-controlled; headless browser sign-in may be declined by the provider.
 No attempt is made to evade such restrictions. Test persistence uses a
 disposable profile and synthetic web page, not a real Google account.
+
+Google Auth can now open a project-pinned viewer session and request the
+fixed setup recipe on the same tab after explicit user confirmation.
+General CDP automation is still blocked while the viewer is active. The
+trusted server supplies the recipe; the public viewer route never accepts
+arbitrary expressions. Results are limited to known setup states and
+public field names. This is a trusted server/daemon capability, not a
+sandbox for arbitrary untrusted CDP clients.
