@@ -113,6 +113,67 @@ def navigate(args, ctx):
         return {"ok": False, "error": str(exc), "error_category": "application"}
 
 
+def navigate_mode(args, ctx):
+    """Open the fixed public Google OAuth setup page in a verified managed Edge mode.
+    Never switch an externally attached browser, run sign-in automation, or capture.
+    """
+    import os
+    import re
+    from urllib.parse import urlsplit, parse_qs
+    from . import _edge_profile as edge
+    def fail(message):
+        return {"ok": False, "error": message, "error_category": "application"}
+    mode = args.get("browser_mode")
+    if args.get("confirm") is not True or not ctx.get("user") or mode not in ("headful", "headless"):
+        return fail("Explicit browser mode confirmation required")
+    url = args.get("url")
+    if not isinstance(url, str) or len(url) > 256:
+        return fail("Invalid Google setup URL")
+    u = urlsplit(url)
+    q = parse_qs(u.query, keep_blank_values=True)
+    if (u.scheme != "https" or u.netloc != "console.cloud.google.com" or
+            u.path != "/auth/clients" or u.fragment or set(q) != {"project"} or
+            len(q["project"]) != 1 or not re.fullmatch(r"[a-z][a-z0-9-]{4,28}[a-z0-9]", q["project"][0])):
+        return fail("Invalid Google setup URL")
+    if os.environ.get("CDP_DEBUG_URL"):
+        return fail("Externally attached Edge cannot be switched")
+    want = "headed" if mode == "headful" else "headless"
+    try:
+        have = edge.current_mode()
+        if have is None and os.path.isfile(edge.PORT_FILE):
+            return fail("Managed browser mode is unknown; stop it locally before retrying")
+        if want == "headless" and edge.prefer_headed():
+            return fail("Managed Edge is pinned to headed mode by the local daemon")
+        if have is not None:
+            with open(edge.PORT_FILE, encoding="utf-8") as stream:
+                port = int(stream.read().strip())
+            if cdp.DEBUG_URL.rstrip("/") != "http://127.0.0.1:%d" % port:
+                return fail("CDP endpoint does not match the dedicated managed browser")
+        if have and have != want:
+            with _SIGNIN_LOCK:
+                if _SIGNIN_SESSIONS:
+                    return fail("An interactive session is active; close it before switching")
+            if any(tab.get("url") != "about:blank" for tab in cdp.page_tabs()) and args.get("restart_managed") is not True:
+                return fail("Managed Edge has open tabs; confirm restart of its dedicated profile")
+        debug = edge.ensure_mode(headless=(want == "headless"))
+        if not debug or edge.current_mode() != want:
+            return fail("Requested managed Edge mode could not be verified")
+        cdp.configure(debug)
+        target = cdp.open_tab(url)
+        if not isinstance(target.get("id"), str):
+            return fail("Managed browser did not return a tab")
+        # Bring the new tab forward only for a visible session. Do not operate login fields.
+        if want == "headed":
+            ws = cdp.connect_ws(target["webSocketDebuggerUrl"])
+            try:
+                cdp.ws_send_recv(ws, "Page.bringToFront", {})
+            finally:
+                ws.close()
+        return {"ok": True, "tab_id": target["id"], "browser_mode": mode}
+    except Exception:
+        return fail("Managed browser mode switch or navigation failed")
+
+
 def close(args, ctx):
     """Close only the explicitly named tab; never default to the user's active tab."""
     tab_id = args.get("tab_id")
@@ -2049,7 +2110,7 @@ def signin_stop(args, ctx):
     return {"ok": True, "stopped": sess is not None}
 
 
-METHODS = {"snapshot": snapshot, "close": close, "tabs": tabs, "navigate": navigate, "eval": eval_js, "status": status,
+METHODS = {"navigate_mode": navigate_mode, "snapshot": snapshot, "close": close, "tabs": tabs, "navigate": navigate, "eval": eval_js, "status": status,
            "signin": signin, "device_login": device_login,
            "signin_open": signin_open, "signin_shot": signin_shot,
            "signin_input": signin_input, "signin_status": signin_status,

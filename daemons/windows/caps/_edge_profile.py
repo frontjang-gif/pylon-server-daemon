@@ -315,6 +315,7 @@ def ensure_running(headless=True):
     if os.name == "nt":
         si = subprocess.STARTUPINFO()
         si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        si.wShowWindow = 0 if headless else 5  # SW_HIDE / SW_SHOW
     try:
         _PROC = subprocess.Popen(args, startupinfo=si,
                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
